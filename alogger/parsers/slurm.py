@@ -1,6 +1,25 @@
 import datetime
 import time
 
+
+def slurm_suffix_to_megabytes(memory_string):
+
+    return slurm_suffix(memory_string) / 1024 / 1024
+
+
+def slurm_suffix(memory_string):
+
+    if memory_string.endswith('K'):
+        return int(memory_string[:-1]) * 1024
+    elif memory_string.endswith('M'):
+        return int(memory_string[:-1]) * 1024 * 1024
+    elif memory_string.endswith('G'):
+        return int(memory_string[:-1]) * 1024 * 1024 * 1024
+    elif memory_string.endswith('T'):
+        return int(memory_string[:-1]) * 1024 * 1024 * 1024 * 1024
+    else:
+        return int(memory_string)
+
 #  Maybe there is some isomething in datetime that takes a ISO std string but I cannot find it, DRB.
 def DateTime_from_String(datetimeSt):
     """Gets a date time string like 2010-09-10T15:54:18 and retuns a datetime object
@@ -92,10 +111,20 @@ def slurm_to_dict(line):
     formatted_data['queue'] = 'UNKNOWN'
     formatted_data['mem'] = 0
     formatted_data['vmem'] = 0
-    formatted_data['list_mem'] = 0
+    
+    if 'MinMemoryCPU' in data:
+        formatted_data['list_pmem'] = slurm_suffix_to_megabytes(data['MinMemoryCPU'])
+    else:
+        formatted_data['list_pmem'] = 0
+
+    if 'MinMemoryNode' in data:
+        formatted_data['list_mem'] = slurm_suffix_to_megabytes(data['MinMemoryNode'])
+    else:
+        formatted_data['list_mem'] = 0
+
     formatted_data['list_vmem'] = 0
-    formatted_data['list_pmem'] = 0
     formatted_data['list_pvmem'] = 0
+
     formatted_data['etime'] = formatted_data['qtime']
     # Things we don't seem to have available, would like qtime and est_wall_time
     # mem, qtime, list_pmem, list_pvmem, queue, vmem, list_vmem, jobname. 
